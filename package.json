@@ -1,0 +1,11 @@
+{
+  "name": "quay-build-lambda",
+  "version": "1.0.0",
+  "description": "Collects an archive of source code from CodePipeline and sends it to Quay to build",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Javier Maldonado",
+  "license": "UNLICENSED"
+}
