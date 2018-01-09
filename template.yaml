@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >-
+  A function is triggered by CodePipeline
+  which checks on the status of the Quay
+  build corresponding to the commit associated
+  with the current CodePipeline execution
+Parameters:
+  TokenParameter:
+    Type: AWS::SSM::Parameter::Name
+    Description: Enter the SSM parameter with the Quay API token.
+  DecryptionKeyIdParameter:
+    Type: String
+    Description: Enter the identifier of the KMS key that decrypts the SSM parameter.
+Resources:
+  QuayBuildFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: checkQuayBuild
+      Handler: index.lambdaHandler
+      Runtime: nodejs6.10
+      Role:
+        !GetAtt QuayBuildRole.Arn
+  QuayBuildRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        -
+          PolicyName: "quayTokenAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - ssm:GetParameters
+                Resource:
+                  - !Join
+                      - ''
+                      - - 'arn:'
+                        - !Ref AWS::Partition
+                        - ':ssm:'
+                        - !Ref AWS::Region
+                        - ':'
+                        - !Ref AWS::AccountId
+                        - ':parameter/'
+                        - !Ref TokenParameter
+              -
+                Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource:
+                  - !Join
+                      - ''
+                      - - 'arn:'
+                        - !Ref AWS::Partition
+                        - ':kms:'
+                        - !Ref AWS::Region
+                        - ':'
+                        - !Ref AWS::AccountId
+                        - ':key/'
+                        - !Ref DecryptionKeyIdParameter
