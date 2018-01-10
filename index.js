@@ -8,12 +8,14 @@ const ssm = new AWS.SSM();
 
 const TOKEN = new Promise((resolve, reject) => {
     console.log("Retrieving Quay API token from SSM Parameter Store");
-    ssm.getParameters(
-        {Names: ['quay-build-lambda-api-token'], WithDecryption: true},
+    ssm.getParameters({
+            Names: ['quay-build-lambda-api-token'],
+            WithDecryption: true
+        },
         (err, data) => {
-            if(err) {
+            if (err) {
                 reject(err);
-            } else if(data.InvalidParameters.length > 0) {
+            } else if (data.InvalidParameters.length > 0) {
                 console.log('Parameters were invalid: ');
                 console.log(data.InvalidParameters);
                 reject(new Error('SSM::InvalidParameterError'));
@@ -99,22 +101,24 @@ exports.lambdaHandler = function(event, context) {
     const commit = job.inputArtifacts[0].revision;
     const repository = job.actionConfiguration.configuration.UserParameters;
 
-    if(typeof repository === 'undefined') {
+    if (typeof repository === 'undefined') {
         console.log('You must supply a repository name in the user parameters');
     }
 
     TOKEN.then(token => ({
-        host: 'quay.io',
-        path: `/api/v1/repository/${repository}/build/`,
-        headers: {'Authorization': `Bearer ${token}`}
-    }))
+            host: 'quay.io',
+            path: `/api/v1/repository/${repository}/build/`,
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        }))
         .then(httpsGetAll)
         .then(getQuayBuilds)
         .then(processQuayBuilds(job, commit))
         .catch(e => {
-            if(e.message) {
+            if (e.message) {
                 console.log(`Caught error: ${e.message}`);
-                if(e.stack) {
+                if (e.stack) {
                     console.log(e.stack);
                 }
             } else {
