@@ -36,10 +36,17 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         -
-          PolicyName: "quayTokenAccess"
+          PolicyName: "quayBuildPolicy"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
+              -
+                Effect: Allow
+                Action:
+                  - codepipeline:PutJobSuccessResult
+                  - codepipeline:PutJobFailureResult
+                Resource:
+                  - "*"
               -
                 Effect: Allow
                 Action:
