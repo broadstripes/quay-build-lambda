@@ -62,49 +62,57 @@ const getQuayBuilds = data => {
 };
 
 const processQuayBuilds = (job, commit) => builds => {
+    const callback = (err, data) => {
+        if (err) {
+            console.log('Error while trying to report to CodePipeline');
+            throw err;
+        } else {
+            console.log('Successfully reported to CodePipeline');
+        }
+    };
     const build = builds.find(
         b => b.trigger_metadata.commit === commit
     );
-
-    if (build) {
-        if (build.phase === 'complete') {
-            console.log('Quay build is complete. Success!');
-            codepipeline.putJobSuccessResult({jobId: job.id});
-        } else if (build.phase === 'pushing') {
-            console.log('Quay build is pushing, retrying.');
-            codepipeline.putJobSuccessResult({
-                jobId: job.id,
-                continuationToken: `token-${commit}`
-            });
-        } else {
-            console.log(`Quay build is in an unexpected phase: ${build.phase}`);
-            codepipeline.putJobFailureResult({
-                jobId: job.id,
-                failureDetails: {
-                    type: 'JobFailed',
-                    message: `Build failed, see: ${build}`,
-                    externalExecutionId: build.id
-                }
-            });
-        }
-    } else {
+    const retryPhases = ['pushing', 'building', 'build-scheduled', 'waiting'];
+    if (typeof build === 'undefined') {
         console.log('Quay build not found, retrying.');
         codepipeline.putJobSuccessResult({
             jobId: job.id,
             continuationToken: `token-${commit}`
-        });
+        }, callback);
+    } else if (build.phase === 'complete') {
+        console.log('Quay build is complete. Success!');
+        codepipeline.putJobSuccessResult({
+            jobId: job.id
+        }, callback);
+    } else if (retryPhases.includes(build.phase)) {
+        console.log(`Quay build is ${build.phase}, retrying.`);
+        codepipeline.putJobSuccessResult({
+            jobId: job.id,
+            continuationToken: `token-${commit}`
+        }, callback);
+    } else {
+        console.log(`Quay build is in an unexpected phase: ${build.phase}`);
+        console.log(build);
+        codepipeline.putJobFailureResult({
+            jobId: job.id,
+            failureDetails: {
+                type: 'JobFailed',
+                message: `Build failed due to unexpected build phase: ${build.phase}`,
+                externalExecutionId: build.id
+            }
+        }, callback);
     }
 };
 
 exports.lambdaHandler = function(event, context) {
-    const job = event['CodePipeline.job'].data;
-    const commit = job.inputArtifacts[0].revision;
-    const repository = job.actionConfiguration.configuration.UserParameters;
-
+    const job = event['CodePipeline.job'];
+    const commit = job.data.inputArtifacts[0].revision;
+    const repository = job.data.actionConfiguration.configuration.UserParameters;
     if (typeof repository === 'undefined') {
         console.log('You must supply a repository name in the user parameters');
+        throw new Error('NoRepository');
     }
-
     TOKEN.then(token => ({
             host: 'quay.io',
             path: `/api/v1/repository/${repository}/build/`,
