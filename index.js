@@ -73,7 +73,14 @@ const processQuayBuilds = (job, commit) => builds => {
     const build = builds.find(
         b => b.trigger_metadata.commit === commit
     );
-    const retryPhases = ['pushing', 'building', 'build-scheduled', 'waiting'];
+    const retryPhases = [
+        'build-scheduled',
+        'waiting',
+        'pulling',
+        'unpacking',
+        'building',
+        'pushing'
+    ];
     if (typeof build === 'undefined') {
         console.log('Quay build not found, retrying.');
         codepipeline.putJobSuccessResult({
