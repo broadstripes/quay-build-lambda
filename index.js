@@ -74,12 +74,13 @@ const processQuayBuilds = (job, commit) => builds => {
         b => b.trigger_metadata.commit === commit
     );
     const retryPhases = [
-        'build-scheduled',
         'waiting',
-        'pulling',
+        'build-scheduled',
         'unpacking',
+        'pulling',
+        'priming-cache',
         'building',
-        'pushing'
+        'pushing',
     ];
     if (typeof build === 'undefined') {
         console.log('Quay build not found, retrying.');
