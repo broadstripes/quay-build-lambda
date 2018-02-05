@@ -5,9 +5,13 @@
     "main": "index.js",
     "scripts": {
         "deploy": "./deploy.sh",
+        "format": "prettier --write \"index.js\"",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "Javier Maldonado",
     "license": "UNLICENSED",
-    "dependencies": {}
+    "dependencies": {},
+    "devDependencies": {
+        "prettier": "1.10.2"
+    }
 }
