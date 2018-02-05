@@ -75,6 +75,7 @@ const processQuayBuilds = (job, commit) => builds => {
     );
     const retryPhases = [
         'waiting',
+        'internalerror',
         'build-scheduled',
         'unpacking',
         'pulling',
