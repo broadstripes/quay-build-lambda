@@ -111,6 +111,19 @@ const processQuayBuilds = (job, commit) => builds => {
       },
       callback
     );
+  } else if (build.phase === "error") {
+    console.log("Quay build failed");
+    codepipeline.putJobFailureResult(
+      {
+        jobId: job.id,
+        failureDetails: {
+          type: "JobFailed",
+          message: "Quay encountered an error",
+          externalExecutionId: build.id
+        }
+      },
+      callback
+    )
   } else if (build.phase === "cancelled") {
     console.log("Quay build was cancelled");
     codepipeline.putJobFailureResult(
