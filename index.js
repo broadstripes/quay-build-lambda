@@ -123,7 +123,7 @@ const processQuayBuilds = (job, commit) => builds => {
         }
       },
       callback
-    )
+    );
   } else if (build.phase === "cancelled") {
     console.log("Quay build was cancelled");
     codepipeline.putJobFailureResult(
@@ -136,7 +136,7 @@ const processQuayBuilds = (job, commit) => builds => {
         }
       },
       callback
-    )
+    );
   } else {
     console.log(`Quay build is in an unexpected phase: ${build.phase}`);
     console.log(build);
